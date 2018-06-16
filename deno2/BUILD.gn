@@ -17,6 +17,7 @@ executable("deno") {
 executable("mock_runtime_test") {
   testonly = true
   sources = [
+    "file_util_test.cc",
     "from_snapshot.cc",
     "mock_runtime_test.cc",
   ]
@@ -29,7 +30,8 @@ executable("mock_runtime_test") {
   defines = [ "DENO_MOCK_RUNTIME" ]
 }
 
-component("libdeno") {
+static_library("libdeno") {
+  complete_static_lib = true
   sources = [
     "from_snapshot.cc",
   ]
@@ -37,7 +39,6 @@ component("libdeno") {
     ":create_snapshot_deno",
     ":deno_nosnapshot",
   ]
-  include_dirs = [ target_gen_dir ]
 }
 
 source_set("deno_nosnapshot") {
@@ -48,14 +49,16 @@ source_set("deno_nosnapshot") {
     "file_util.h",
     "include/deno.h",
   ]
-  include_dirs = [ "include/" ]
   deps = [
     "v8:v8",
     "v8:v8_libbase",
     "v8:v8_libplatform",
     "v8:v8_libsampler",
   ]
-  public_configs = [ ":public_v8_base_config" ]
+  public_configs = [
+    "v8:libplatform_config",
+    ":public_v8_base_config",
+  ]
 }
 
 # This allows us to v8/src/base/ libraries.
@@ -95,6 +98,7 @@ run_node("bundle") {
     "js/main.ts",
     "js/msg.pb.d.ts",
     "js/msg.pb.js",
+    "js/package.json", # `browserslist` field controls transform.
   ]
   outputs = [
     out_dir + "main.js",
